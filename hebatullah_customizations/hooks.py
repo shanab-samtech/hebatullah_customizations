@@ -23,6 +23,8 @@ app_license = "mit"
 
 # Includes in <head>
 # ------------------
+# hooks.py
+app_include_js = ["assets/hebatullah_customizations/js/sticky_panel.js"]
 
 # include js, css files in header of desk.html
 # app_include_css = "/assets/hebatullah_customizations/css/hebatullah_customizations.css"

@@ -178,6 +178,7 @@ def get_columns(invoice_list, additional_table_columns, include_payments=False):
 			"fieldname": "voucher_type",
 			"width": 120,
 			"hidden": 1,
+			
 		},
 		{
 			"label": _("Voucher"),
@@ -185,6 +186,7 @@ def get_columns(invoice_list, additional_table_columns, include_payments=False):
 			"fieldtype": "Dynamic Link",
 			"options": "voucher_type",
 			"width": 120,
+			
 		},
 		{"label": _("Posting Date"), "fieldname": "posting_date", "fieldtype": "Date", "width": 80},
 		{
@@ -195,7 +197,7 @@ def get_columns(invoice_list, additional_table_columns, include_payments=False):
 			"width": 120,
 			"hidden": 1,
 		},
-		{"label": _("Customer Name"), "fieldname": "customer_name", "fieldtype": "Data", "width": 120},
+		{"label": _("Customer Name"), "fieldname": "customer_name", "fieldtype": "Data", "width": 320},
 	]
 
 	if additional_table_columns and not include_payments:
@@ -265,7 +267,7 @@ def get_columns(invoice_list, additional_table_columns, include_payments=False):
 				"fieldname": "cost_center",
 				"fieldtype": "Link",
 				"options": "Cost Center",
-				"width": 100,
+				"width": 200,
 			},
 			{
 				"label": _("Warehouse"),
@@ -300,7 +302,7 @@ def get_columns(invoice_list, additional_table_columns, include_payments=False):
 			"fieldname": "net_total",
 			"fieldtype": "Currency",
 			"options": "currency",
-			"width": 120,
+			"width": 200,
 		}
 	]
 
