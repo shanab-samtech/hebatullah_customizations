@@ -1,13 +1,29 @@
 (function () {
-  const REPORT_NAME = "Profit and Loss Statement";      // exact report name
-  const FROZEN_COLS = 2;                      // how many left columns to freeze
+  const REPORT_NAME = "Profit and Loss Statement"; // exact report name
+  const FROZEN_COLS = 2; // how many left columns to freeze
 
   // inject base CSS once
   function ensureBaseCSS() {
     if (document.getElementById("sticky-col-style")) return;
+
     const css = `
-      .dt-sticky { position: sticky; background:#fff; z-index: 2; }
+      /* frozen columns */
+      .dt-sticky { position: sticky; background: #fff; z-index: 2; }
+      /* frozen column header */
       .dt-header .dt-sticky { z-index: 4; box-shadow: 2px 0 2px -1px rgba(0,0,0,0.08); }
+
+      /* sticky header row */
+      .dt-header .dt-row .dt-cell {
+        position: sticky;
+        top: 0;
+        background: #fff;
+        z-index: 5;
+      }
+
+      /* dropdown fix */
+      .dt-dropdown__list {
+        z-index: 12316 !important;
+      }
     `;
     const s = document.createElement("style");
     s.id = "sticky-col-style";
@@ -17,7 +33,11 @@
 
   function isPnLRoute() {
     const r = frappe.get_route();
-    return r && r[0] === "query-report" && decodeURIComponent(r[1] || "") === REPORT_NAME;
+    return (
+      r &&
+      r[0] === "query-report" &&
+      decodeURIComponent(r[1] || "") === REPORT_NAME
+    );
   }
 
   function applySticky() {
@@ -32,44 +52,66 @@
       el.classList.remove("dt-sticky");
     });
 
-    // helper to mark all cells (header + body) for a given 1-based column index
-    const markCol = (idx, leftPx) => {
-      const headerCells = table.querySelectorAll(`.dt-header .dt-row .dt-cell:nth-child(${idx})`);
-      const bodyCells   = table.querySelectorAll(`.dt-scrollable .dt-row .dt-cell:nth-child(${idx})`);
-      [...headerCells, ...bodyCells].forEach((cell) => {
-        cell.classList.add("dt-sticky");
-        cell.style.left = leftPx + "px";
-      });
-    };
-
-    // measure cumulative widths from header cells (handles resizes and user drag)
+    // freeze left columns
     let offset = 0;
     for (let i = 1; i <= FROZEN_COLS; i++) {
-      markCol(i, offset);
-      const hdr = table.querySelector(`.dt-header .dt-row .dt-cell:nth-child(${i})`);
+      const headerCells = table.querySelectorAll(
+        `.dt-header .dt-row .dt-cell:nth-child(${i})`
+      );
+      const bodyCells = table.querySelectorAll(
+        `.dt-scrollable .dt-row .dt-cell:nth-child(${i})`
+      );
+      [...headerCells, ...bodyCells].forEach((cell) => {
+        cell.classList.add("dt-sticky");
+        cell.style.left = offset + "px";
+      });
+      const hdr = table.querySelector(
+        `.dt-header .dt-row .dt-cell:nth-child(${i})`
+      );
       const w = hdr ? Math.ceil(hdr.getBoundingClientRect().width) : 200;
       offset += w;
     }
   }
 
+  function fixDropdown() {
+    // dropdown is dynamically created, so check each time
+    document.querySelectorAll(".dt-dropdown__list").forEach((dropdown) => {
+      dropdown.style.zIndex = "12316";
+    });
+  }
+
   function boot() {
     ensureBaseCSS();
 
-    // Run when we land on the report (after it renders)
     const runIfPnL = () => {
       if (!isPnLRoute()) return;
-      // Datatable renders async; wait a tick
+
+      // apply sticky columns and header
       setTimeout(applySticky, 50);
-      // Observe re-renders (paging/sorting/filters)
+
+      // fix dropdown z-index
+      setTimeout(fixDropdown, 50);
+
+      // observe re-renders (paging, sorting, filters)
       const wrap = document.querySelector(".report-wrapper") || document.body;
       if (!wrap._stickyObserver) {
-        const mo = new MutationObserver(() => applySticky());
+        const mo = new MutationObserver(() => {
+          applySticky();
+          fixDropdown();
+        });
         mo.observe(wrap, { childList: true, subtree: true });
         wrap._stickyObserver = mo;
       }
-      // Re-apply on window resize
+
+      // apply on window resize
       if (!window._stickyResizeBound) {
-        window.addEventListener("resize", frappe.utils.throttle(applySticky, 200));
+        window.addEventListener(
+          "resize",
+          frappe.utils.throttle(() => {
+            applySticky();
+            fixDropdown();
+          }, 200)
+        );
         window._stickyResizeBound = true;
       }
     };
